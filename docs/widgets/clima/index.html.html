@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clima</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --mist:#ACD2D0;
+    --sky-1:#E7F3F1; --sky-2:#D2E9E6; --sky-3:#BCDDDA;
+    --ink:#173532; --ink-soft:#587A77;
+    --card:#FCFEFD;
+    --uv:#E0A23D;  --uv-bg:#FBF1DE;
+    --wind:#5FA6CC; --wind-bg:#E6F1F8;
+    --pol:#7FBE5F;  --pol-bg:#ECF6E4;
+    --line:rgba(23,53,50,.09);
+    --shadow:0 12px 30px -14px rgba(23,53,50,.35), 0 2px 6px -3px rgba(23,53,50,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Nunito",system-ui,sans-serif;color:var(--ink);
+    background:transparent;
+    display:flex;align-items:center;justify-content:center;
+    padding:12px;-webkit-font-smoothing:antialiased;
+  }
+
+  .card{
+    width:100%;max-width:360px;
+    background:var(--card);
+    border-radius:22px;overflow:hidden;
+    box-shadow:var(--shadow);
+  }
+
+  /* header */
+  .header{
+    position:relative;overflow:hidden;
+    padding:15px 17px 16px;
+    background:linear-gradient(180deg,var(--sky-1),var(--sky-2) 60%,var(--sky-3));
+  }
+  .header::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(80% 120% at 50% -30%, rgba(255,255,255,.9), transparent 60%)}
+  .drift{position:absolute;inset:0;z-index:0;opacity:.45;pointer-events:none}
+  .drift span{position:absolute;height:1px;left:-45%;width:46%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);
+    animation:drift linear infinite}
+  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(380%)}}
+
+  .h-top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .loc{font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink-soft);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cond-wrap{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+  .cond{font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap}
+  .ico{width:22px;height:22px;color:var(--ink);flex:0 0 auto}
+  .ico svg{width:100%;height:100%;display:block}
+
+  .temp-row{position:relative;z-index:2;display:flex;align-items:flex-end;gap:9px;margin-top:7px}
+  .temp-big{font-size:clamp(34px,11vw,42px);font-weight:800;line-height:1;letter-spacing:-1px;
+    font-variant-numeric:tabular-nums;cursor:pointer;user-select:none;
+    transition:opacity .24s, transform .24s}
+  .temp-big .u{font-size:.45em;font-weight:700;color:var(--ink-soft)}
+  .temp-alt{font-family:"Space Mono",monospace;font-size:10px;color:var(--ink-soft);padding-bottom:4px;letter-spacing:.2px}
+  .tap{position:relative;z-index:2;margin-top:3px;font-size:9px;font-weight:700;letter-spacing:.6px;
+    color:var(--ink-soft);opacity:.6}
+
+  .resync{position:absolute;z-index:3;top:11px;right:11px;display:none}
+
+  /* métricas — chipzinhos */
+  .metrics{display:flex;gap:7px;padding:11px}
+  .chip{flex:1;min-width:0;border-radius:14px;padding:9px 10px 10px;background:#F2F8F7}
+  .chip.uv{background:var(--uv-bg)} .chip.wind{background:var(--wind-bg)} .chip.pol{background:var(--pol-bg)}
+  .c-lab{display:flex;align-items:center;gap:5px;font-size:8.5px;font-weight:800;letter-spacing:.8px;
+    text-transform:uppercase;color:var(--ink-soft)}
+  .c-dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+  .c-val{font-size:17px;font-weight:800;margin-top:6px;line-height:1;font-variant-numeric:tabular-nums}
+  .c-val .su{font-size:10px;font-weight:700;color:var(--ink-soft);margin-left:1px}
+  .c-tag{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--ink-soft);margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .c-bar{margin-top:8px;height:3px;border-radius:99px;background:rgba(23,53,50,.08);overflow:hidden;position:relative}
+  .c-bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+
+  .note{display:none;padding:0 12px 11px;font-family:"Space Mono",monospace;font-size:9px;
+    line-height:1.5;color:var(--ink-soft)}
+  .note.show{display:block}
+
+  .card.loading .skel{color:transparent !important;border-radius:5px;
+    background:linear-gradient(90deg,rgba(23,53,50,.06),rgba(23,53,50,.14),rgba(23,53,50,.06));
+    background-size:200% 100%;animation:sh 1.2s linear infinite}
+  .header .skel{background:linear-gradient(90deg,rgba(255,255,255,.4),rgba(255,255,255,.8),rgba(255,255,255,.4));
+    background-size:200% 100%;animation:sh 1.2s linear infinite}
+  .card.loading .c-bar i{width:0 !important}
+  @keyframes sh{from{background-position:200% 0}to{background-position:-200% 0}}
+
+  @media (prefers-reduced-motion:reduce){.drift span{display:none}}
+</style>
+</head>
+<body>
+  <div class="card loading" id="card">
+    <div class="header">
+      <div class="drift" id="drift"></div>
+      <div class="h-top">
+        <span class="loc skel" id="loc">São Paulo</span>
+        <span class="cond-wrap"><span class="cond skel" id="cond">—</span><span class="ico" id="ico"></span></span>
+      </div>
+      <div class="temp-row">
+        <span class="temp-big" id="tempBig"><span class="n skel">19</span><span class="u" id="unit">°</span></span>
+        <span class="temp-alt skel" id="alt">66°F · 292K</span>
+      </div>
+      <div class="tap">toque na temperatura ↺</div>
+    </div>
+
+    <div class="metrics">
+      <div class="chip uv">
+        <div class="c-lab"><span class="c-dot" style="background:var(--uv)"></span>uv</div>
+        <div class="c-val skel" id="uvVal">2</div>
+        <div class="c-tag skel" id="uvTag">Baixo</div>
+        <div class="c-bar"><i id="uvBar" style="background:var(--uv)"></i></div>
+      </div>
+      <div class="chip wind">
+        <div class="c-lab"><span class="c-dot" style="background:var(--wind)"></span>vento</div>
+        <div class="c-val skel"><span id="windVal">11</span><span class="su">km/h</span></div>
+        <div class="c-tag skel" id="windTag">Brisa leve</div>
+        <div class="c-bar"><i id="windBar" style="background:var(--wind)"></i></div>
+      </div>
+      <div class="chip pol">
+        <div class="c-lab"><span class="c-dot" style="background:var(--pol)"></span>pólen</div>
+        <div class="c-val skel" id="polVal">—</div>
+        <div class="c-tag skel" id="polTag">—</div>
+        <div class="c-bar"><i id="polBar" style="background:var(--pol)"></i></div>
+      </div>
+    </div>
+
+    <div class="note" id="note"></div>
+  </div>
+
+<script>
+(function(){
+  var SP={lat:-23.5505,lon:-46.6333,name:"São Paulo"};
+  var FB={temp:18.9,feels:18,code:2,day:1,wind:11,uv:2};
+  var state={c:null,order:["C","F","K"],idx:0};
+  var $=function(id){return document.getElementById(id);};
+
+  function to(p,ms){return Promise.race([p,new Promise(function(_,r){setTimeout(function(){r(0);},ms);})]);}
+  function fmt(n){return (Math.round(n*10)/10).toFixed(1);}
+
+  function getLoc(){return new Promise(function(res){
+    if(!navigator.geolocation)return res(null);
+    navigator.geolocation.getCurrentPosition(
+      function(p){res({lat:p.coords.latitude,lon:p.coords.longitude});},
+      function(){res(null);},{timeout:6000,maximumAge:600000});
+  });}
+  function rev(lat,lon){
+    var u="https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="+lat+"&longitude="+lon+"&localityLanguage=pt";
+    return to(fetch(u),5000).then(function(r){return r.json();}).then(function(d){
+      return d.city||d.locality||d.principalSubdivision||"Sua localização";
+    }).catch(function(){return "Sua localização";});
+  }
+  function wx(lat,lon){
+    var u="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+
+      "&current=temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m"+
+      "&hourly=uv_index&forecast_days=1&timezone=auto";
+    return to(fetch(u),7000).then(function(r){return r.json();});
+  }
+  function air(lat,lon){
+    var u="https://air-quality-api.open-meteo.com/v1/air-quality?latitude="+lat+"&longitude="+lon+
+      "&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto";
+    return to(fetch(u),7000).then(function(r){return r.json();}).catch(function(){return null;});
+  }
+
+  function tIn(unit){var c=state.c;
+    if(unit==="C")return{n:Math.round(c),u:"°",full:Math.round(c)+"°C"};
+    if(unit==="F")return{n:Math.round(c*9/5+32),u:"°F",full:Math.round(c*9/5+32)+"°F"};
+    return{n:Math.round(c+273.15),u:"K",full:Math.round(c+273.15)+"K"};
+  }
+  function renderT(){var big=$("tempBig"),p=tIn(state.order[state.idx]);
+    big.style.opacity="0";big.style.transform="translateY(4px)";
+    setTimeout(function(){big.querySelector(".n").textContent=p.n;$("unit").textContent=p.u;
+      var r=[],i;for(i=0;i<3;i++)if(i!==state.idx)r.push(tIn(state.order[i]).full);
+      $("alt").textContent=r.join(" · ");
+      big.style.opacity="1";big.style.transform="translateY(0)";},120);
+  }
+
+  function cond(code,day){var m={0:"Céu limpo",1:"Quase limpo",2:"Parc. nublado",3:"Nublado",45:"Névoa",48:"Névoa",
+    51:"Garoa",53:"Garoa",55:"Garoa",61:"Chuva fraca",63:"Chuva",65:"Chuva forte",66:"Chuva gelada",67:"Chuva gelada",
+    71:"Neve",73:"Neve",75:"Neve",77:"Granizo",80:"Pancadas",81:"Pancadas",82:"Aguaceiro",85:"Neve",86:"Neve",
+    95:"Tempestade",96:"Tempestade",99:"Tempestade"};
+    return (m[code]||"—")+(day===0?" · noite":"");
+  }
+  function icon(code,day){
+    var sun='<circle cx="12" cy="12" r="4"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6L18 18M18 6l-1.4 1.4M7.4 16.6L6 18"/>';
+    var moon='<path d="M16 13.5A5.5 5.5 0 1110.5 8 4.3 4.3 0 0016 13.5z"/>';
+    var cloud='<path d="M7.5 18h8a3.5 3.5 0 00.3-7 5 5 0 00-9.5-1A3.5 3.5 0 007.5 18z"/>';
+    var rain=cloud+'<path d="M9 20l-.6 1.6M12.5 20l-.6 1.6M16 20l-.6 1.6"/>';
+    var bolt=cloud+'<path d="M12 13l-2 3.5h2.4L11 21"/>';
+    var g;
+    if(code===0||code===1)g=(day===0?moon:sun);
+    else if(code===2)g=(day===0?moon:sun)+'<path d="M9 18h7a3 3 0 00.2-6 4.3 4.3 0 00-7-1.4" opacity=".55"/>';
+    else if([95,96,99].indexOf(code)>=0)g=bolt;
+    else if([51,53,55,61,63,65,66,67,80,81,82,71,73,75,77,85,86].indexOf(code)>=0)g=rain;
+    else g=cloud;
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+g+'</svg>';
+  }
+  function uvB(v){if(v<3)return["Baixo","#7FBE5F"];if(v<6)return["Moderado","#E0A23D"];
+    if(v<8)return["Alto","#E07B39"];if(v<11)return["Muito alto","#E06B6B"];return["Extremo","#B07BD6"];}
+  function windB(k){if(k<6)return"Calmo";if(k<12)return"Brisa leve";if(k<20)return"Brisa boa";
+    if(k<29)return"Vento fresco";if(k<39)return"Vento forte";return"Ventania";}
+  function polB(v){if(v==null)return["n/d",0];if(v<1)return["Nenhum",4];if(v<20)return["Baixo",24];
+    if(v<50)return["Moderado",50];if(v<100)return["Alto",76];return["Muito alto",96];}
+
+  function drift(w){var d=$("drift");d.innerHTML="";var b=Math.max(5,22-w*0.35);
+    for(var i=0;i<4;i++){var s=document.createElement("span");s.style.top=(12+i*22)+"%";
+      s.style.animationDuration=(b+i*1.8)+"s";s.style.animationDelay=(-i*2.3)+"s";d.appendChild(s);}}
+  function unskel(){document.querySelectorAll(".skel").forEach(function(e){e.classList.remove("skel");});}
+
+  function paint(w,a,nm){
+    $("card").classList.remove("loading");
+    var c=w.current;state.c=c.temperature_2m;state.idx=0;renderT();
+    if(nm)$("loc").textContent=nm;
+    $("cond").textContent=cond(c.weather_code,c.is_day);
+    $("ico").innerHTML=icon(c.weather_code,c.is_day);
+
+    var uv=null,h=w.hourly;
+    if(h&&h.time&&h.uv_index){var k=(c.time||"").slice(0,13);
+      var i=h.time.findIndex(function(t){return t.slice(0,13)===k;});
+      uv=(i<0)?Math.max.apply(null,h.uv_index.filter(function(x){return x!=null;})):h.uv_index[i];}
+    if(uv==null)uv=0;uv=Math.round(uv*10)/10;var ub=uvB(uv);
+    $("uvVal").textContent=(uv%1===0?uv:fmt(uv));$("uvTag").textContent=ub[0];
+    $("uvBar").style.background=ub[1];$("uvBar").style.width=Math.min(100,uv/12*100)+"%";
+
+    var wd=Math.round(c.wind_speed_10m);
+    $("windVal").textContent=wd;$("windTag").textContent=windB(wd);
+    $("windBar").style.width=Math.min(100,wd/55*100)+"%";drift(wd);
+
+    var pol=null,any=false;
+    if(a&&a.current)["alder_pollen","birch_pollen","grass_pollen","mugwort_pollen","olive_pollen","ragweed_pollen"]
+      .forEach(function(key){var v=a.current[key];if(v!=null&&!isNaN(v)){any=true;if(pol==null||v>pol)pol=v;}});
+    var pb=polB(any?pol:null);
+    $("polVal").textContent=any?Math.round(pol):"—";$("polTag").textContent=pb[0];
+    $("polBar").style.width=pb[1]+"%";
+    if(!any){$("note").classList.add("show");
+      $("note").textContent="* pólen do Open-Meteo cobre só a Europa; aqui vem n/d. Resto é da sua posição, ao vivo.";}
+    else $("note").classList.remove("show");
+    unskel();
+  }
+  function fallback(){
+    $("card").classList.remove("loading");
+    state.c=FB.temp;state.idx=0;renderT();$("loc").textContent=SP.name;
+    $("cond").textContent=cond(FB.code,FB.day);$("ico").innerHTML=icon(FB.code,FB.day);
+    var ub=uvB(FB.uv);$("uvVal").textContent=FB.uv;$("uvTag").textContent=ub[0];
+    $("uvBar").style.background=ub[1];$("uvBar").style.width=(FB.uv/12*100)+"%";
+    $("windVal").textContent=FB.wind;$("windTag").textContent=windB(FB.wind);
+    $("windBar").style.width=(FB.wind/55*100)+"%";drift(FB.wind);
+    $("polVal").textContent="—";$("polTag").textContent="n/d";$("polBar").style.width="0";
+    $("note").classList.add("show");
+  }
+  function run(){
+    $("card").classList.add("loading");
+    document.querySelectorAll("#loc,#cond,#alt,#uvVal,#uvTag,#windVal,#windTag,#polVal,#polTag,.temp-big .n")
+      .forEach(function(e){e.classList.add("skel");});
+    getLoc().then(function(loc){
+      var used=loc||SP,fb=!loc,nm=fb?SP.name:null;
+      if(!fb)rev(used.lat,used.lon).then(function(n){$("loc").textContent=n;});
+      return Promise.all([wx(used.lat,used.lon),air(used.lat,used.lon)]).then(function(r){
+        if(!r[0]||!r[0].current){fallback();return;} paint(r[0],r[1],nm);});
+    }).catch(function(){fallback();});
+  }
+  $("tempBig").addEventListener("click",function(){if(state.c==null)return;state.idx=(state.idx+1)%3;renderT();});
+  run();
+})();
+</script>
+</body>
+</html>
