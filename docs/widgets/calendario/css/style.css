@@ -22,7 +22,7 @@ html, body {
   font-family: var(--font);
 }
 
-.cal-wrap { width: 240px; }
+.cal-wrap { width: 200px; }
 
 .cal-card {
   background: #fff;
