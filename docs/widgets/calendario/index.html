@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendário Lunar</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="cal-wrap">
+    <div class="cal-card">
+      <div class="cal-head">
+        <div class="cal-nav">
+          <button class="nav-btn" id="prev-btn" aria-label="Mês anterior">&#8249;</button>
+          <div>
+            <div class="cal-title" id="cal-title"></div>
+            <div class="cal-subtitle" id="cal-subtitle"></div>
+          </div>
+          <button class="nav-btn" id="next-btn" aria-label="Próximo mês">&#8250;</button>
+        </div>
+      </div>
+      <div class="weekdays">
+        <div class="wd">D</div><div class="wd">S</div><div class="wd">T</div>
+        <div class="wd">Q</div><div class="wd">Q</div><div class="wd">S</div><div class="wd">S</div>
+      </div>
+      <div class="days-grid" id="days-grid"></div>
+      <div class="info-bar">
+        <div class="info-left" id="info-left"></div>
+        <div class="info-right" id="info-right"></div>
+      </div>
+    </div>
+  </div>
+  <script src="js/moon.js"></script>
+  <script src="js/holidays.js"></script>
+  <script src="js/calendar.js"></script>
+</body>
+</html>
